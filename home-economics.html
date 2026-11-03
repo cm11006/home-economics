@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家政科畢業學分試算</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f2f5fb;--surface:#fff;--ink:#17233b;--muted:#5d6b85;--line:#d5dcea;--accent:#2b59d9;--ok:#13744a;--okbg:#dff3e8;--bad:#b3261e;--badbg:#fbe3e1;--failrow:#fff4f3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10162a;--surface:#1a2340;--ink:#e8edf9;--muted:#9aa8c7;--line:#2e3a5f;--accent:#7d9cff;--ok:#6fd3a1;--okbg:#17382b;--bad:#ff8f87;--badbg:#431f1d;--failrow:#2b2030}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10162a;--surface:#1a2340;--ink:#e8edf9;--muted:#9aa8c7;--line:#2e3a5f;--accent:#7d9cff;--ok:#6fd3a1;--okbg:#17382b;--bad:#ff8f87;--badbg:#431f1d;--failrow:#2b2030}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.6rem;margin:8px 0 4px}
+h2{font-size:1.05rem;margin:0 0 10px}
+p.lead{margin:0 0 18px;color:var(--muted)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.verdict{border-width:2px;padding:18px 16px}
+.verdict.ok{border-color:var(--ok);background:var(--okbg)}
+.verdict.bad{border-color:var(--bad);background:var(--badbg)}
+.verdict .big{font-size:1.9rem;font-weight:700;line-height:1.25}
+.verdict.ok .big{color:var(--ok)}.verdict.bad .big{color:var(--bad)}
+.conds{list-style:none;margin:12px 0 0;padding:0}
+.conds li{padding:8px 0;border-top:1px solid var(--line)}
+.conds .h{font-weight:700}
+.conds .good{color:var(--ok)}.conds .nope{color:var(--bad)}
+.bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center}
+.stats b{display:block;font-size:1.3rem}
+.stats span{font-size:.85rem;color:var(--muted)}
+label{display:inline-flex;align-items:center;gap:8px}
+input[type=number],input[type=text],select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:40px}
+input[type=number]{width:84px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--bad)}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;min-height:40px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-size:.9rem;color:var(--muted);font-weight:500}
+tr.fail{background:var(--failrow)}
+tr.fail td.name{text-decoration:line-through;text-decoration-color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cat{list-style:none;margin:8px 0 0;padding:0}
+.cat li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.cat li.grp{font-weight:700;color:var(--accent)}
+.note{font-size:.88rem;color:var(--muted)}
+.x{border:0;background:none;color:var(--muted);padding:4px 8px}
+tr.gh td{background:var(--bg);font-weight:700;color:var(--accent);border-bottom:2px solid var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>家政科畢業學分試算</h1>
+<p class="lead">依家政科學分表，勾選不及格的科目，立刻知道是否符合畢業條件。</p>
+
+<section id="verdict" class="verdict" aria-live="polite"></section>
+
+<section>
+<h2>1. 畢業條件</h2>
+<div class="row">
+<label>總取得學分至少 <input type="number" id="goal" min="0" value="160"></label>
+<label>部定科目及格率至少 <input type="number" id="rate" min="0" max="100" value="85">%</label>
+<label>專業及實習科目及格學分至少 <input type="number" id="prof" min="0" value="60"></label>
+</div>
+<div class="row" style="margin-top:10px">
+<label>及格率計算方式
+<select id="mode"><option value="credit">依學分數</option><option value="count">依科目數</option></select></label>
+</div>
+<p class="note">部定科目＝部定必修一般科目＋部定必修實習科目。專業及實習科目＝部定必修實習科目＋校訂必修實習科目＋校訂選修實習科目。及格率的算法請以學校規定為準，預設依學分數計算。</p>
+</section>
+
+<section>
+<h2>2. 勾選不及格的科目</h2>
+<div class="tablewrap">
+<table>
+<thead><tr><th>不及格</th><th>科目</th><th>學分</th><th>類別</th><th></th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<p class="note">課表依家政科學分表與選課學分表建立。跑班/分組選修共三欄，各從下拉選單選一門課，系統自動帶入學分與類別；選「無(不及格)」的欄位不計入任何學分。</p>
+<div class="row" style="margin-top:8px">
+<button id="reset">全部取消勾選</button>
+<button id="defaults">還原預設課表</button>
+<button id="clear">清空所有科目</button>
+</div>
+</section>
+
+<section>
+<h2>3. 新增科目</h2>
+<div class="row">
+<input type="text" id="n" placeholder="科目名稱" aria-label="科目名稱" style="flex:1 1 140px">
+<select id="g" aria-label="學期"></select>
+<input type="number" id="c" min="0" max="20" value="2" aria-label="學分">
+<select id="t" aria-label="類別"></select>
+<button class="primary" id="add">新增科目</button>
+</div>
+</section>
+
+<section>
+<h2>各類別明細</h2>
+<ul class="cat" id="cats"></ul>
+</section>
+</main>
+
+<script>
+(function(){
+var CATS=["部定必修一般科目","部定必修實習科目","校訂必修一般科目","校訂必修實習科目","校訂選修一般科目","校訂選修實習科目"];
+var BUDING=["部定必修一般科目","部定必修實習科目"];
+var PRO=["部定必修實習科目","校訂必修實習科目","校訂選修實習科目"];
+var KEY="credit-calc-home-v2";
+var GR=["一上","一下","二上","二下","三上","三下"];
+var FLEX="跑班/分組選修";
+var SLOTS=[
+{n:"高二上同科單班（二選一）",o:[["文創商品設計實務Ⅰ",2,5],["在地產業創意發想實務Ⅰ",2,5]]},
+{n:"高三上跨群（三選一）",o:[["故事人物造型Ⅰ",2,5],["繪畫與海報設計Ⅰ",2,5],["應用數學Ⅰ",2,4]]},
+{n:"高三下跨群（三選一）",o:[["故事人物造型Ⅱ",2,5],["繪畫與海報設計Ⅱ",2,5],["應用數學Ⅱ",2,4]]}
+];
+var DATA=[
+["國語文Ⅰ","一上",3,0],
+["英文Ⅰ","一上",2,0],
+["本土語Ⅰ","一上",1,0],
+["數學Ⅰ","一上",2,0],
+["生物","一上",2,0],
+["音樂Ⅰ","一上",1,0],
+["法律與生活Ⅰ","一上",1,0],
+["資訊科技Ⅰ","一上",1,0],
+["健康與護理Ⅰ","一上",1,0],
+["體育Ⅰ","一上",2,0],
+["家政概論Ⅰ","一上",2,1],
+["色彩概論","一上",2,1],
+["多媒材創作實務Ⅰ","一上",3,1],
+["嬰幼兒發展照護實務Ⅰ","一上",2,1],
+["觀光餐旅導論Ⅰ","一上",2,3],
+["中餐烹飪Ⅰ","一上",3,3],
+["國語文Ⅱ","一下",3,0],
+["英文Ⅱ","一下",2,0],
+["本土語Ⅱ","一下",1,0],
+["數學Ⅱ","一下",2,0],
+["公民與社會","一下",2,0],
+["音樂Ⅱ","一下",1,0],
+["法律與生活Ⅱ","一下",1,0],
+["資訊科技Ⅱ","一下",1,0],
+["健康與護理Ⅱ","一下",1,0],
+["體育Ⅱ","一下",2,0],
+["家政概論Ⅱ","一下",2,1],
+["家政職業衛生與安全","一下",2,1],
+["多媒材創作實務Ⅱ","一下",3,1],
+["嬰幼兒發展照護實務Ⅱ","一下",2,1],
+["觀光餐旅導論Ⅱ","一下",2,3],
+["中餐烹飪Ⅱ","一下",3,3],
+["國語文Ⅲ","二上",3,0],
+["英文Ⅲ","二上",2,0],
+["數學Ⅲ","二上",2,0],
+["物理","二上",1,0],
+["化學","二上",1,0],
+["美術Ⅰ","二上",1,0],
+["體育Ⅲ","二上",2,0],
+["家庭教育Ⅰ","二上",2,1],
+["飾品設計與實務Ⅰ","二上",2,1],
+["膳食與營養實務Ⅰ","二上",2,1],
+["幼兒教保活動設計與實務Ⅰ","二上",2,1],
+["中國地方菜Ⅰ","二上",3,3],
+["烘焙Ⅰ","二上",3,3],
+["美顏實務Ⅰ","二上",2,5],
+["國語文Ⅳ","二下",3,0],
+["英文Ⅳ","二下",2,0],
+["數學Ⅳ","二下",2,0],
+["地理","二下",2,0],
+["美術Ⅱ","二下",1,0],
+["體育Ⅳ","二下",2,0],
+["家庭教育Ⅱ","二下",2,1],
+["飾品設計與實務Ⅱ","二下",2,1],
+["膳食與營養實務Ⅱ","二下",2,1],
+["幼兒教保活動設計與實務Ⅱ","二下",2,1],
+["中國地方菜Ⅱ","二下",3,3],
+["烘焙Ⅱ","二下",3,3],
+["專題實作Ⅰ","二下",2,3],
+["美顏實務Ⅱ","二下",2,5],
+["國語文Ⅴ","三上",2,0],
+["英文Ⅴ","三上",2,0],
+["歷史Ⅰ","三上",1,0],
+["體育Ⅴ","三上",2,0],
+["全民國防教育","三上",2,0],
+["家政職業倫理Ⅰ","三上",1,1],
+["行銷與服務Ⅰ","三上",2,1],
+["家政美學Ⅰ","三上",1,1],
+["家庭生活管理實務Ⅰ","三上",2,1],
+["閱讀與寫作Ⅰ","三上",1,2],
+["米麵食Ⅰ","三上",3,3],
+["宴會膳食Ⅰ","三上",3,3],
+["專題實作Ⅱ","三上",2,3],
+["飲料調製Ⅰ","三上",3,5],
+["餐飲服務技術Ⅰ","三上",3,5],
+["國語文Ⅵ","三下",2,0],
+["英文Ⅵ","三下",2,0],
+["歷史Ⅱ","三下",1,0],
+["體育Ⅵ","三下",2,0],
+["家政職業倫理Ⅱ","三下",1,1],
+["行銷與服務Ⅱ","三下",2,1],
+["家政美學Ⅱ","三下",1,1],
+["家庭生活管理實務Ⅱ","三下",2,1],
+["閱讀與寫作Ⅱ","三下",1,2],
+["米麵食Ⅱ","三下",3,3],
+["宴會膳食Ⅱ","三下",3,3],
+["專題實作Ⅲ","三下",2,3],
+["飲料調製Ⅱ","三下",3,5],
+["餐飲服務技術Ⅱ","三下",3,5]
+];
+function defaults(){return DATA.map(function(d){return{n:d[0],g:d[1],c:d[2],t:CATS[d[3]],f:false}})}
+function defaultFlex(){return [-1,-1,-1]}
+var state={goal:160,rate:85,prof:60,mode:"credit",list:defaults(),flex:defaultFlex()};
+try{var s=localStorage.getItem(KEY);if(s){state=JSON.parse(s)}}catch(e){}
+if(state.prof==null)state.prof=60;
+if(!state.flex||state.flex.length!==SLOTS.length)state.flex=defaultFlex();
+state.list.forEach(function(x){if(GR.indexOf(x.g)<0)x.g=GR[0]});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function $(id){return document.getElementById(id)}
+function esc(x){return String(x).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]})}
+
+$("t").innerHTML=CATS.map(function(c){return "<option>"+c+"</option>"}).join("");
+$("g").innerHTML=GR.map(function(g){return "<option>"+g+"</option>"}).join("");
+
+function calc(){
+ var total=0,failed=0,by={},bt=0,bf=0,nt=0,nf=0,pt=0,pp=0;
+ CATS.forEach(function(c){by[c]={t:0,f:0}});
+ state.list.forEach(function(x){
+  var c=+x.c||0;total+=c;if(x.f)failed+=c;
+  if(!by[x.t])by[x.t]={t:0,f:0};
+  by[x.t].t+=c;if(x.f)by[x.t].f+=c;
+  if(BUDING.indexOf(x.t)>-1){bt+=c;nt+=1;if(x.f){bf+=c;nf+=1}}
+  if(PRO.indexOf(x.t)>-1){pt+=c;if(!x.f)pp+=c}
+ });
+ state.flex.forEach(function(sel,i){
+  var o=SLOTS[i].o[sel];if(!o)return;
+  var cat=CATS[o[2]],c=o[1];
+  total+=c;by[cat].t+=c;
+  if(PRO.indexOf(cat)>-1){pt+=c;pp+=c}
+ });
+ return{total:total,failed:failed,passed:total-failed,by:by,bt:bt,bf:bf,nt:nt,nf:nf,pt:pt,pp:pp};
+}
+
+function render(){
+ $("goal").value=state.goal;$("rate").value=state.rate;$("prof").value=state.prof;$("mode").value=state.mode;
+ var r=calc(),goal=+state.goal||0,need=+state.rate||0;
+ var byCount=state.mode==="count";
+ var T=byCount?r.nt:r.bt,F=byCount?r.nf:r.bf,unit=byCount?"科":"學分";
+ var gap=goal-r.passed,ok1=gap<=0;
+ var P=T-F;
+ var ok2=T===0?true:(P*100>=need*T);
+ var rateTxt=T===0?"尚未列出部定科目":(Math.round(P/T*1000)/10)+"%（"+P+" / "+T+" "+unit+"及格）";
+ var maxFail=Math.floor(T*(100-need)/100+1e-9);
+ var room=maxFail-F;
+ var needP=+state.prof||0,ok3=r.pp>=needP,gap3=needP-r.pp;
+ var line3=ok3?"已達標，超過 "+(r.pp-needP)+" 學分":"還差 "+gap3+" 學分";
+ var ok=ok1&&ok2&&ok3,v=$("verdict");
+ v.className="verdict "+(ok?"ok":"bad");
+ var big=ok?"符合畢業條件":"尚未符合畢業條件";
+ var line1=ok1?"已達標，超過門檻 "+(r.passed-goal)+" 學分":"還差 "+gap+" 學分";
+ var line2;
+ if(T===0)line2="尚未列出部定科目，無法計算。";
+ else line2=ok2?("已達標，還可再有 "+room+" "+unit+"不及格。"):("未達標，部定不及格已超出上限 "+(-room)+" "+unit+"。");
+ var pct=goal>0?Math.min(100,Math.round(r.passed/goal*100)):100;
+ var warn=r.total<goal?'<div class="note" style="margin-top:8px">你列出的科目總共只有 '+r.total+' 學分，低於門檻，請確認是否已加入所有要修的科目。</div>':"";
+ v.innerHTML='<div class="big">'+big+'</div>'+
+ '<ul class="conds">'+
+ '<li><div class="h '+(ok1?"good":"nope")+'">'+(ok1?"✔":"✘")+' 總取得學分：'+r.passed+' / '+goal+'</div><div>'+line1+'</div></li>'+
+ '<li><div class="h '+(ok2?"good":"nope")+'">'+(ok2?"✔":"✘")+' 部定科目及格率：'+rateTxt+'，要求至少 '+need+'%</div><div>'+line2+'</div></li>'+
+ '<li><div class="h '+(ok3?"good":"nope")+'">'+(ok3?"✔":"✘")+' 專業及實習科目及格學分：'+r.pp+' / '+needP+'</div><div>'+line3+'</div></li></ul>'+
+ '<div class="bar" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pct+'%"></i></div>'+
+ '<div class="stats"><div><b>'+r.total+'</b><span>列出總學分</span></div><div><b>'+r.failed+'</b><span>不及格學分</span></div><div><b>'+r.passed+'</b><span>取得學分</span></div></div>'+warn;
+ var rowFn=function(x,i){
+  return '<tr class="'+(x.f?"fail":"")+'"><td><input type="checkbox" data-i="'+i+'" '+(x.f?"checked":"")+' aria-label="'+esc(x.n)+' 不及格"></td><td class="name">'+esc(x.n)+'</td><td>'+(+x.c)+'</td><td>'+esc(x.t)+'</td><td><button class="x" data-del="'+i+'" aria-label="刪除 '+esc(x.n)+'">刪除</button></td></tr>';
+ };
+ $("rows").innerHTML=GR.map(function(g){
+  var items="",cnt=0,gc=0,gf=0;
+  state.list.forEach(function(x,i){if(x.g===g){items+=rowFn(x,i);cnt++;gc+=(+x.c||0);if(x.f)gf+=(+x.c||0)}});
+  var tip=g===FLEX?"（預設全部勾選為不及格，修過並及格的請取消勾選）":"";
+  return '<tr class="gh"><td colspan="5">'+g+'：'+cnt+' 科，'+gc+' 學分，不及格 '+gf+' 學分'+tip+'</td></tr>'+(items||'<tr><td colspan="5" class="note">這個學期還沒有科目。</td></tr>');
+ }).join("");
+ var fc=0;
+ var flexRow=function(sel,i){
+  var S=SLOTS[i],o=S.o[sel];
+  if(o)fc+=o[1];
+  var opts='<option value="-1">無(不及格)</option>'+S.o.map(function(p,k){return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+esc(p[0])+'（'+p[1]+' 學分）</option>'}).join("");
+  return '<tr><td colspan="2"><div class="note">'+esc(S.n)+'</div><select data-sel="'+i+'" aria-label="'+esc(S.n)+'">'+opts+'</select></td><td>'+(o?o[1]:0)+'</td><td>'+(o?CATS[o[2]]:"—")+'</td><td></td></tr>';
+ };
+ var frows=state.flex.map(flexRow).join("");
+ $("rows").innerHTML+='<tr class="gh"><td colspan="5">'+FLEX+'：三欄各從選單選一門課，目前計入 '+fc+' 學分。選「無(不及格)」的欄位不計入任何學分。</td></tr>'+frows;
+ $("cats").innerHTML=CATS.map(function(c){
+  var b=r.by[c];
+  return '<li><span>'+c+'</span><span>'+(b.t-b.f)+' / '+b.t+' 學分及格</span></li>';
+ }).join("")+'<li class="grp"><span>部定科目合計</span><span>'+(r.bt-r.bf)+' / '+r.bt+' 學分，'+(r.nt-r.nf)+' / '+r.nt+' 科</span></li>'+'<li class="grp"><span>專業及實習科目合計</span><span>'+r.pp+' / '+r.pt+' 學分及格</span></li>';
+ save();
+}
+
+$("goal").addEventListener("input",function(e){state.goal=+e.target.value||0;render()});
+$("rate").addEventListener("input",function(e){state.rate=+e.target.value||0;render()});
+$("prof").addEventListener("input",function(e){state.prof=+e.target.value||0;render()});
+$("mode").addEventListener("change",function(e){state.mode=e.target.value;render()});
+$("rows").addEventListener("change",function(e){
+ var t=e.target,i=t.getAttribute("data-i");
+ if(i!=null){state.list[i].f=t.checked;render();return}
+ var si=t.getAttribute("data-sel");
+ if(si!=null){state.flex[+si]=+t.value;render()}
+});
+$("rows").addEventListener("click",function(e){var d=e.target.getAttribute("data-del");if(d!=null){state.list.splice(+d,1);render()}});
+$("add").addEventListener("click",function(){
+ var n=$("n").value.trim();if(!n){$("n").focus();return}
+ state.list.push({n:n,c:+$("c").value||0,t:$("t").value,g:$("g").value,f:false});
+ $("n").value="";render();$("n").focus();
+});
+$("n").addEventListener("keydown",function(e){if(e.key==="Enter")$("add").click()});
+$("defaults").addEventListener("click",function(){state.list=defaults();state.flex=defaultFlex();render()});
+$("clear").addEventListener("click",function(){state.list=[];state.flex=defaultFlex();render()});
+$("reset").addEventListener("click",function(){state.list.forEach(function(x){x.f=false});render()});
+render();
+})();
+</script>
+</body>
+</html>
